@@ -5,7 +5,17 @@
 
 #define GPULIGHTMASSKERNEL_LIB
 
+#if defined(__NVCC__)
 #include <cuda_runtime.h>
+#define _host_ = __host__
+#else
+#if !defined(NDEBUG)
+#define VUDA_STD_LAYER_ENABLED
+#define VUDA_DEBUG_ENABLED
+#endif
+#include <vuda_runtime.hpp>
+#define _host_
+#endif
 #include "helper_math.h"
 #include "GPULightmassKernel.h"
 
@@ -16,12 +26,13 @@
 #include "ProgressReport.h"
 #include "BVH/EmbreeBVHBuilder.h"
 
-__host__ void rtBindMaskedCollisionMaps(
+
+_host_ void rtBindMaskedCollisionMaps(
 	int NumMaps,
 	cudaTextureObject_t* InMaps
 );
 
-__host__ void rtLaunchVolumetric(
+_host_ void rtLaunchVolumetric(
 	const int BrickSize,
 	const float3 WorldBrickMin,
 	const float3 WorldChildCellSize,
@@ -29,14 +40,14 @@ __host__ void rtLaunchVolumetric(
 	GPULightmass::VolumetricLightSample InOutVolumetricBrickLowerSamples[]
 );
 
-__host__ void rtLaunchVolumeSamples(
+_host_ void rtLaunchVolumeSamples(
 	const int NumSamples,
 	const float3 WorldPositions[],
 	GPULightmass::VolumetricLightSample InOutVolumetricBrickUpperSamples[],
 	GPULightmass::VolumetricLightSample InOutVolumetricBrickLowerSamples[]
 );
 
-__host__ void rtBindPunctualLights(
+_host_ void rtBindPunctualLights(
 	const int InNumDirectionalLights,
 	const GPULightmass::DirectionalLight* InDirectionalLights,
 	const int InNumPointLights,
@@ -45,7 +56,7 @@ __host__ void rtBindPunctualLights(
 	const GPULightmass::SpotLight* InSpotLights
 );
 
-__host__ void rtSetGlobalSamplingParameters(
+_host_ void rtSetGlobalSamplingParameters(
 	float FireflyClampingThreshold
 );
 

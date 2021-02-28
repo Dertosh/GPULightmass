@@ -28,7 +28,15 @@
 #pragma once
 
 #include <math.h>
-#include <cuda_runtime.h> // for __host__  __device__
+#if defined(__NVCC__)
+#include <cuda_runtime.h>// for __host__  __device__
+#else
+#if !defined(NDEBUG)
+#define VUDA_STD_LAYER_ENABLED
+#define VUDA_DEBUG_ENABLED
+#endif
+#include <vuda_runtime.hpp>// for __host__  __device__
+#endif 
 
 #define FW_ASSERT(X) ((void)0) 
 // FW_ASSERT(X) ((X) ? ((void)0) : FW::fail("Assertion failed!\n%s:%d\n%s", __FILE__, __LINE__, #X)) in DEBUG
@@ -44,13 +52,35 @@ struct Vec2f
 		float _v[2];
 	};
 
-	__host__ __device__ Vec2f(float _x = 0, float _y = 0) : x(_x), y(_y) {}
-	__host__ __device__ Vec2f(const Vec2f& v) : x(v.x), y(v.y) {}
+#if defined(__NVCC__) 
+	__host__ __device__ 
+#endif
+	Vec2f(float _x = 0, float _y = 0) : x(_x), y(_y) {}
+#if defined(__NVCC__) 
+	__host__ __device__
+#endif
+		Vec2f(const Vec2f& v) : x(v.x), y(v.y) {}
 
-	inline __host__ __device__ bool operator==(const Vec2f& v) { return x == v.x && y == v.y; }
-	inline __host__ __device__ Vec2f operator+(const Vec2f& v) const { return Vec2f(x + v.x, y + v.y); }
-	inline __host__ __device__ Vec2f operator-(const Vec2f& v) const { return Vec2f(x - v.x, y - v.y); }
-	inline __host__ __device__ Vec2f operator*(const Vec2f& v) const { return Vec2f(x * v.x, y * v.y); }
+	inline 
+#if defined(__NVCC__)
+		__host__ __device__
+#endif 
+	bool operator==(const Vec2f& v) { return x == v.x && y == v.y; }
+	inline 
+#if defined(__NVCC__) 
+		__host__ __device__
+#endif
+	Vec2f operator+(const Vec2f& v) const { return Vec2f(x + v.x, y + v.y); }
+	inline
+#if defined(__NVCC__) 
+		__host__ __device__
+#endif 
+	Vec2f operator-(const Vec2f& v) const { return Vec2f(x - v.x, y - v.y); }
+	inline
+#if defined(__NVCC__) 
+		__host__ __device__
+#endif
+	Vec2f operator*(const Vec2f& v) const { return Vec2f(x * v.x, y * v.y); }
 };
 
 struct Vec2i
@@ -60,17 +90,26 @@ struct Vec2i
 		struct { int x, y; };
 		int _v[2];
 	};
-
+#if defined(__NVCC__) 
 	__host__ __device__ Vec2i(int _x = 0, int _y = 0) : x(_x), y(_y) {}
 	__host__ __device__ Vec2i(const Vec2i& v) : x(v.x), y(v.y) {}
 
 	inline bool __host__ __device__ operator == (const Vec2i& v) { return x == v.x && y == v.y; }
+#else
+	Vec2i(int _x = 0, int _y = 0) : x(_x), y(_y) {}
+	Vec2i(const Vec2i& v) : x(v.x), y(v.y) {}
+
+	inline bool operator == (const Vec2i& v) { return x == v.x && y == v.y; }
+#endif
 };
 
-
+#if defined(__NVCC__) 
 inline __host__ __device__ float max1f(const float& a, const float& b) { return (a < b) ? b : a; }
 inline __host__ __device__ float min1f(const float& a, const float& b) { return (a > b) ? b : a; }
-
+#else
+inline float max1f(const float& a, const float& b) { return (a < b) ? b : a; }
+inline float min1f(const float& a, const float& b) { return (a > b) ? b : a; }
+#endif
 
 #undef max
 #undef min
@@ -84,20 +123,21 @@ struct Vec3f
 		float _v[3];
 	};
 
+#if defined(__NVCC__) 
 	__host__ __device__ Vec3f(float _x = 0, float _y = 0, float _z = 0) : x(_x), y(_y), z(_z) {}
 	__host__ __device__ Vec3f(const Vec3f& v) : x(v.x), y(v.y), z(v.z) {}
-	inline __host__ __device__ float length() const { return sqrtf(x*x + y*y + z*z); }
+	inline __host__ __device__ float length() const { return sqrtf(x * x + y * y + z * z); }
 	// sometimes we dont need the sqrt, we are just comparing one length with another
-	inline __host__ __device__ float lengthsq() const { return x*x + y*y + z*z; }
+	inline __host__ __device__ float lengthsq() const { return x * x + y * y + z * z; }
 	inline __host__ __device__ float max() const { return max1f(max1f(x, y), z); }
 	inline __host__ __device__ float min() const { return min1f(min1f(x, y), z); }
-	inline __host__ __device__ void normalize() { float norm = sqrtf(x*x + y*y + z*z); x /= norm; y /= norm; z /= norm; }
-	inline __host__ __device__ Vec3f getNormalized() const { float norm = sqrtf(x*x + y*y + z*z); return Vec3f(x / norm, y / norm, z / norm); }
+	inline __host__ __device__ void normalize() { float norm = sqrtf(x * x + y * y + z * z); x /= norm; y /= norm; z /= norm; }
+	inline __host__ __device__ Vec3f getNormalized() const { float norm = sqrtf(x * x + y * y + z * z); return Vec3f(x / norm, y / norm, z / norm); }
 	inline __host__ __device__ Vec3f& operator+=(const Vec3f& v) { x += v.x; y += v.y; z += v.z; return *this; }
 	inline __host__ __device__ Vec3f& operator-=(const Vec3f& v) { x -= v.x; y -= v.y; z -= v.z; return *this; }
 	inline __host__ __device__ Vec3f& operator*=(const float& a) { x *= a; y *= a; z *= a; return *this; }
 	inline __host__ __device__ Vec3f& operator*=(const Vec3f& v) { x *= v.x; y *= v.y; z *= v.z; return *this; }
-	inline __host__ __device__ Vec3f operator*(float a) const { return Vec3f(x*a, y*a, z*a); }
+	inline __host__ __device__ Vec3f operator*(float a) const { return Vec3f(x * a, y * a, z * a); }
 	inline __host__ __device__ Vec3f operator/(float a) const { return Vec3f(x / a, y / a, z / a); }
 	inline __host__ __device__ float& operator[](int i) { return _v[i]; }
 	inline __host__ __device__ float operator[](int i) const { return _v[i]; }
@@ -108,6 +148,32 @@ struct Vec3f
 	inline __host__ __device__ Vec3f& operator/=(const float& a) { x /= a; y /= a; z /= a; return *this; }
 	inline __host__ __device__ bool operator!=(const Vec3f& v) { return x != v.x || y != v.y || z != v.z; }
 	inline __host__ __device__ bool operator==(const Vec3f& v) { return x == v.x && y == v.y && z == v.z; }
+#else
+	Vec3f(float _x = 0, float _y = 0, float _z = 0) : x(_x), y(_y), z(_z) {}
+	Vec3f(const Vec3f& v) : x(v.x), y(v.y), z(v.z) {}
+	inline  float length() const { return sqrtf(x * x + y * y + z * z); }
+	// sometimes we dont need the sqrt, we are just comparing one length with another
+	inline float lengthsq() const { return x * x + y * y + z * z; }
+	inline float max() const { return max1f(max1f(x, y), z); }
+	inline float min() const { return min1f(min1f(x, y), z); }
+	inline void normalize() { float norm = sqrtf(x * x + y * y + z * z); x /= norm; y /= norm; z /= norm; }
+	inline Vec3f getNormalized() const { float norm = sqrtf(x * x + y * y + z * z); return Vec3f(x / norm, y / norm, z / norm); }
+	inline Vec3f& operator+=(const Vec3f& v) { x += v.x; y += v.y; z += v.z; return *this; }
+	inline Vec3f& operator-=(const Vec3f& v) { x -= v.x; y -= v.y; z -= v.z; return *this; }
+	inline Vec3f& operator*=(const float& a) { x *= a; y *= a; z *= a; return *this; }
+	inline Vec3f& operator*=(const Vec3f& v) { x *= v.x; y *= v.y; z *= v.z; return *this; }
+	inline Vec3f operator*(float a) const { return Vec3f(x * a, y * a, z * a); }
+	inline Vec3f operator/(float a) const { return Vec3f(x / a, y / a, z / a); }
+	inline float& operator[](int i) { return _v[i]; }
+	inline float operator[](int i) const { return _v[i]; }
+	inline Vec3f operator*(const Vec3f& v) const { return Vec3f(x * v.x, y * v.y, z * v.z); }
+	inline Vec3f operator+(const Vec3f& v) const { return Vec3f(x + v.x, y + v.y, z + v.z); }
+	inline Vec3f operator-(const Vec3f& v) const { return Vec3f(x - v.x, y - v.y, z - v.z); }
+	inline Vec3f operator/(const Vec3f& v) const { return Vec3f(x / v.x, y / v.y, z / v.z); }
+	inline Vec3f& operator/=(const float& a) { x /= a; y /= a; z /= a; return *this; }
+	inline bool operator!=(const Vec3f& v) { return x != v.x || y != v.y || z != v.z; }
+	inline bool operator==(const Vec3f& v) { return x == v.x && y == v.y && z == v.z; }
+#endif
 };
 
 struct Vec3i
@@ -118,11 +184,20 @@ struct Vec3i
 	};
 	/// int x, y, z;
 
+
+#if defined(__NVCC__) 
 	__host__ __device__ Vec3i(int _x = 0, int _y = 0, int _z = 0) : x(_x), y(_y), z(_z) {}
 	__host__ __device__ Vec3i(const Vec3i& v) : x(v.x), y(v.y), z(v.z) {}
 	__host__ __device__ Vec3i(const Vec3f& vf) : x((int)vf.x), y((int)vf.y), z((int)vf.z) {}
 
 	inline __host__ __device__ bool operator==(const Vec3i& v) { return x == v.x && y == v.y && z == v.z; }
+#else
+	Vec3i(int _x = 0, int _y = 0, int _z = 0) : x(_x), y(_y), z(_z) {}
+	Vec3i(const Vec3i& v) : x(v.x), y(v.y), z(v.z) {}
+	Vec3i(const Vec3f& vf) : x((int)vf.x), y((int)vf.y), z((int)vf.z) {}
+
+	inline bool operator==(const Vec3i& v) { return x == v.x && y == v.y && z == v.z; }
+#endif
 };
 
 struct Vec4f
@@ -132,7 +207,7 @@ struct Vec4f
 		float _v[4];
 	};
 	///float x, y, z, w;
-
+#if defined(__NVCC__)
 	__host__ __device__ Vec4f(float _x = 0, float _y = 0, float _z = 0, float _w = 0) : x(_x), y(_y), z(_z), w(_w) {}
 	__host__ __device__ Vec4f(const Vec4f& v) : x(v.x), y(v.y), z(v.z), w(v.w) {}
 	__host__ __device__ Vec4f(const float4& v) : x(v.x), y(v.y), z(v.z), w(v.w) {}
@@ -140,17 +215,32 @@ struct Vec4f
 
 	inline __host__ __device__ Vec4f& operator+=(const Vec4f& v) { x += v.x; y += v.y; z += v.z; w += v.w;  return *this; }
 	inline __host__ __device__ Vec4f& operator*=(const Vec4f& v) { x *= v.x; y *= v.y; z *= v.z; w *= v.w;  return *this; }
+#else
+	Vec4f(float _x = 0, float _y = 0, float _z = 0, float _w = 0) : x(_x), y(_y), z(_z), w(_w) {}
+	Vec4f(const Vec4f& v) : x(v.x), y(v.y), z(v.z), w(v.w) {}
+	Vec4f(const float4& v) : x(v.x), y(v.y), z(v.z), w(v.w) {}
+	Vec4f(const Vec3f& v, const float a) : x(v.x), y(v.y), z(v.z), w(a) {}
+
+	inline Vec4f& operator+=(const Vec4f& v) { x += v.x; y += v.y; z += v.z; w += v.w;  return *this; }
+	inline Vec4f& operator*=(const Vec4f& v) { x *= v.x; y *= v.y; z *= v.z; w *= v.w;  return *this; }
+#endif
 };
 
 struct Vec4i
 {
 	int x, y, z, w;
-
+#if defined(__NVCC__)
 	__host__ __device__ Vec4i(int _x = 0, int _y = 0, int _z = 0, int _w = 0) : x(_x), y(_y), z(_z), w(_w) {}
 	__host__ __device__ Vec4i(const Vec4i& v) : x(v.x), y(v.y), z(v.z), w(v.w) {}
 	__host__ __device__ Vec4i(const Vec3i& v, const int a) : x(v.x), y(v.y), z(v.z), w(a) {}
+#else
+	Vec4i(int _x = 0, int _y = 0, int _z = 0, int _w = 0) : x(_x), y(_y), z(_z), w(_w) {}
+	Vec4i(const Vec4i& v) : x(v.x), y(v.y), z(v.z), w(v.w) {}
+	Vec4i(const Vec3i& v, const int a) : x(v.x), y(v.y), z(v.z), w(a) {}
+#endif
 };
 
+#if defined(__NVCC__)
 inline __host__ __device__ Vec3f min3f(const Vec3f& v1, const Vec3f& v2) { return Vec3f(v1.x < v2.x ? v1.x : v2.x, v1.y < v2.y ? v1.y : v2.y, v1.z < v2.z ? v1.z : v2.z); }
 inline __host__ __device__ Vec3f max3f(const Vec3f& v1, const Vec3f& v2) { return Vec3f(v1.x > v2.x ? v1.x : v2.x, v1.y > v2.y ? v1.y : v2.y, v1.z > v2.z ? v1.z : v2.z); }
 inline __host__ __device__ Vec3f cross(const Vec3f& v1, const Vec3f& v2) { return Vec3f(v1.y*v2.z - v1.z*v2.y, v1.z*v2.x - v1.x*v2.z, v1.x*v2.y - v1.y*v2.x); }
@@ -164,7 +254,21 @@ inline __host__ __device__ float clampf(float a, float lo, float hi) { return a 
 inline __host__ __device__ Vec3f clamp3f(const Vec3f& v, float lo, float hi) { return Vec3f(clampf(v.x, lo, hi), clampf(v.y, lo, hi), clampf(v.z, lo, hi)); }
 inline __host__ __device__ Vec3f mixf(const Vec3f& v1, const Vec3f& v2, float a) { return v1 * (1.0f - a) + v2 * a; }
 inline __host__ __device__ float smoothstep(float edge0, float edge1, float x) { float t; t = clampf((x - edge0) / (edge1 - edge0), 0.0, 1.0); return t * t * (3.0f - 2.0f * t); }
-
+#else
+inline Vec3f min3f(const Vec3f& v1, const Vec3f& v2) { return Vec3f(v1.x < v2.x ? v1.x : v2.x, v1.y < v2.y ? v1.y : v2.y, v1.z < v2.z ? v1.z : v2.z); }
+inline Vec3f max3f(const Vec3f& v1, const Vec3f& v2) { return Vec3f(v1.x > v2.x ? v1.x : v2.x, v1.y > v2.y ? v1.y : v2.y, v1.z > v2.z ? v1.z : v2.z); }
+inline Vec3f cross(const Vec3f& v1, const Vec3f& v2) { return Vec3f(v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z, v1.x * v2.y - v1.y * v2.x); }
+inline float dot(const Vec3f& v1, const Vec3f& v2) { return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z; }
+inline float dot(const Vec4f& v1, const Vec4f& v2) { return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z; }
+inline float distancesq(const Vec3f& v1, const Vec3f& v2) { return (v1.x - v2.x) * (v1.x - v2.x) + (v1.y - v2.y) * (v1.y - v2.y) + (v1.z - v2.z) * (v1.z - v2.z); }
+inline float distance(const Vec3f& v1, const Vec3f& v2) { return sqrtf((v1.x - v2.x) * (v1.x - v2.x) + (v1.y - v2.y) * (v1.y - v2.y) + (v1.z - v2.z) * (v1.z - v2.z)); }
+inline Vec3f powf(const Vec3f& v1, const Vec3f& v2) { return Vec3f(powf(v1.x, v2.x), powf(v1.y, v2.y), powf(v1.z, v2.z)); }
+inline Vec3f expf(const Vec3f& v) { return Vec3f(expf(v.x), expf(v.y), expf(v.z)); }
+inline float clampf(float a, float lo, float hi) { return a < lo ? lo : a > hi ? hi : a; }
+inline Vec3f clamp3f(const Vec3f& v, float lo, float hi) { return Vec3f(clampf(v.x, lo, hi), clampf(v.y, lo, hi), clampf(v.z, lo, hi)); }
+inline Vec3f mixf(const Vec3f& v1, const Vec3f& v2, float a) { return v1 * (1.0f - a) + v2 * a; }
+inline float smoothstep(float edge0, float edge1, float x) { float t; t = clampf((x - edge0) / (edge1 - edge0), 0.0, 1.0); return t * t * (3.0f - 2.0f * t); }
+#endif
 //-------------------------------------------------------------------------------------------------
 
 //----------------------------------

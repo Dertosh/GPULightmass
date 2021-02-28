@@ -1,5 +1,15 @@
 #pragma once
-#include <cuda_runtime.h>
+
+#if defined(__NVCC__)
+	#include <cuda_runtime.h>
+#else
+	#if !defined(NDEBUG)
+		#define VUDA_STD_LAYER_ENABLED
+		#define VUDA_DEBUG_ENABLED
+	#endif
+	#include <vuda_runtime.hpp>
+#endif
+
 #include <vector>
 #include <memory>
 #include "linear_math.h"
